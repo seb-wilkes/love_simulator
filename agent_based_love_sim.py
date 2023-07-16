@@ -11,7 +11,7 @@ import numpy as np
 from numpy.random import random # uniform random variable [0,1)
 
 # Agent constants
-SENSITIVITY_CONST = 1
+SENSITIVITY_CONST = 0.1
 NORM_CONST = np.exp(- (10 * SENSITIVITY_CONST))
 RELATIONSHIP_SURVIVABILITY_CONST = np.sqrt(0.95)
 
@@ -115,14 +115,16 @@ class population:
                 new_partner_arg = matches[0,0]
             else:                
                 # find first available partner
+                potential_interests = _couple_tracker[matches]
+                if np.all(potential_interests):
+                    continue # no luck!
                 new_partner_arg = matches[np.argwhere(
-                    ~_couple_tracker[matches])[0,0]][0]
-            _couple_tracker[[i,new_partner_arg]] = True                
-            self.relationship_register.append((
-                self.population[shuffled_indices[i]],
-                self.population[shuffled_indices[new_partner_arg]]))
-            self.singles_register[[shuffled_indices[i],
-                                   shuffled_indices[new_partner_arg]]] = False
+                    ~potential_interests)[0,0]][0]
+            _couple_tracker[[i,new_partner_arg]] = True   
+            new_pair = (shuffled_indices[i], shuffled_indices[new_partner_arg])       
+            # print(new_pair)
+            self.relationship_register.append(new_pair)
+            self.singles_register[[*new_pair]] = False
             
         return
                 
@@ -130,17 +132,19 @@ class population:
     
     def check_relationship_outcomes(self):
         pop_indices = []; couples_no = len(self.relationship_register)
-        for c_i, couple in self.relationship_register[::-1]:
-            sentiment_a = self.population[couple[0]].relationship_routine
-            sentiment_b = self.population[couple[1]].relationship_routine
+        for c_i, couple in enumerate(self.relationship_register[::-1]):
+            print(c_i,couple)
+            sentiment_a = self.population[couple[0]].relationship_routine()
+            sentiment_b = self.population[couple[1]].relationship_routine()
             if sentiment_a and sentiment_b:
                 pass # happy days
             else:
                 # prepare to strike from register
-                pop_indices.append(couples_no - c_i)
-                
+                pop_indices.append(couples_no - c_i - 1)
+                self.singles_register[[*couple]] = ~self.singles_register[[*couple]]
         for index in pop_indices:
             self.relationship_register.pop(index) # free to mingle once more
+            
                 
         
     
@@ -184,6 +188,7 @@ def main(number_of_intervals, pop_size):
     teens = population(probabilistic_sampling_func, pop_size)
     for t in range(number_of_intervals):
         teens.full_time_interval()
+    return teens
     
                 
-main(100,1000)
+teens = main(100,1000)
