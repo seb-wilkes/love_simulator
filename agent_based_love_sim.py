@@ -16,7 +16,7 @@ NORM_CONST = np.exp(- (10 * SENSITIVITY_CONST))
 RELATIONSHIP_SURVIVABILITY_CONST = np.sqrt(0.95)
 
 # Simulation parameters 
-CLUSTER_SIZE_MEAN = 20
+CLUSTER_SIZE_MEAN = 100
 # CLUSTER_SIZE_VARIATION = 4
 
 class agent:
@@ -71,7 +71,8 @@ class population:
         print("Population constructed")
         self.agent_ids = np.array([i for i in range(size)])
         # stores ids of agents not in relationships
-        self.singles_register = np.full_like(self.population, True)        
+        self.singles_register = np.full_like(self.population, 
+                                             True).astype(bool)        
         self.relationship_register = [] # stores id tuples of relationships
         # Now create interaction matrix for all agents
         self.interaction_matrix = np.zeros((size,size))
@@ -151,7 +152,7 @@ class population:
         self.compatibility_stage_first_preference(shuffled_indices, 
                                                   mingle_stage)
         
-    def simple_batching_function(full_shuffled_indices):
+    def simple_batching_function(self, full_shuffled_indices):
         
         max_number_of_batches = len(full_shuffled_indices) // CLUSTER_SIZE_MEAN
 
@@ -185,10 +186,4 @@ def main(number_of_intervals, pop_size):
         teens.full_time_interval()
     
                 
-
-
-    
-        
-        
-        
-        
+main(100,1000)
