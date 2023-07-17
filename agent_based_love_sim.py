@@ -9,15 +9,18 @@ Created on Sat Jul 15 21:28:30 2023
 
 import numpy as np
 from numpy.random import random # uniform random variable [0,1)
-
+from time import time
+from tqdm import tqdm
 # Agent constants
-SENSITIVITY_CONST = 0.1
-NORM_CONST = np.exp(- (10 * SENSITIVITY_CONST))
+SENSITIVITY_CONST = 0.69
+NORM_CONST = np.exp(- (9 * SENSITIVITY_CONST))
 RELATIONSHIP_SURVIVABILITY_CONST = np.sqrt(0.95)
 
 # Simulation parameters 
 CLUSTER_SIZE_MEAN = 100
 # CLUSTER_SIZE_VARIATION = 4
+TIME_STEPS = 1000
+NUMBER_OF_AGENTS = 5000
 
 class agent:
     '''
@@ -28,7 +31,8 @@ class agent:
         self.beauty_value = beauty_value
         self.id = agent_id
         self.relationship_status = False
-        self.coupled_with_id = None
+        # self.coupled_with_id = None
+        # self.history_of_partners = []
         
     def set_relationship_status(self):
         self.relationship_status = ~self.relationship_status
@@ -66,8 +70,8 @@ class population:
         if size % CLUSTER_SIZE_MEAN != 0: #TODO may instead move this out of class init
             size += size % CLUSTER_SIZE_MEAN
             
-        self.population = np.array([agent(random_var(), i) 
-                                    for i in range(size)])
+        self.population = [agent(random_var(), i) 
+                                    for i in range(size)]
         print("Population constructed")
         self.agent_ids = np.array([i for i in range(size)])
         # stores ids of agents not in relationships
@@ -111,8 +115,6 @@ class population:
             number_of_matches = matches.size
             if number_of_matches == 0:
                 continue # no love this time
-            elif number_of_matches == 1:
-                new_partner_arg = matches[0,0]
             else:                
                 # find first available partner
                 potential_interests = _couple_tracker[matches]
@@ -121,30 +123,25 @@ class population:
                 new_partner_arg = matches[np.argwhere(
                     ~potential_interests)[0,0]][0]
             _couple_tracker[[i,new_partner_arg]] = True   
-            new_pair = (shuffled_indices[i], shuffled_indices[new_partner_arg])       
-            # print(new_pair)
+            new_pair = (shuffled_indices[i], shuffled_indices[new_partner_arg])
             self.relationship_register.append(new_pair)
             self.singles_register[[*new_pair]] = False
             
         return
-                
-            
     
     def check_relationship_outcomes(self):
         pop_indices = []; couples_no = len(self.relationship_register)
         for c_i, couple in enumerate(self.relationship_register[::-1]):
-            print(c_i,couple)
             sentiment_a = self.population[couple[0]].relationship_routine()
             sentiment_b = self.population[couple[1]].relationship_routine()
             if sentiment_a and sentiment_b:
                 pass # happy days
             else:
+                self.singles_register[[*couple]] = True
                 # prepare to strike from register
                 pop_indices.append(couples_no - c_i - 1)
-                self.singles_register[[*couple]] = ~self.singles_register[[*couple]]
         for index in pop_indices:
-            self.relationship_register.pop(index) # free to mingle once more
-            
+            self.relationship_register.pop(index) # free to mingle once more      
                 
         
     
@@ -162,7 +159,7 @@ class population:
 
         return [full_shuffled_indices[i*CLUSTER_SIZE_MEAN: 
                                       ((i+1)*CLUSTER_SIZE_MEAN) if i
-                                      < max_number_of_batches else -1]
+                                      < max_number_of_batches else None]
                 for i in range(max_number_of_batches + 1)]
     
     def full_time_interval(self):
@@ -173,22 +170,31 @@ class population:
             self.batch_time_interval(mini_batch)
         # finish off interval by testing relationship status
         self.check_relationship_outcomes()
+        # record any data
+        for a in self.relationship_register:
+            self.population[a[0]].set_relationship_status()
+            self.population[a[1]].set_relationship_status()
+        self.time_series_store.append([len(self.relationship_register),[a.relationship_status for a in self.population]])
         return
 
 
 
 def probabilistic_sampling_func():
     ''' 
-    Merely a wrapper to return the desired PDF which has a beauty domain [0,10]
+    Merely a wrapper to return the desired PDF which has a beauty domain [1,10]
     '''
-    return 10.0*random()
+    return 1.0 + 9*random()
 
         
 def main(number_of_intervals, pop_size):
     teens = population(probabilistic_sampling_func, pop_size)
-    for t in range(number_of_intervals):
+    start_time = time()
+    # for t in tqdm(range(number_of_intervals)):
+    for t in (range(number_of_intervals)):
         teens.full_time_interval()
+    print("run complete")
+    print(time() - start_time)
     return teens
     
                 
-teens = main(100,1000)
+test = main(TIME_STEPS, NUMBER_OF_AGENTS)
