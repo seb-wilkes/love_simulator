@@ -12,14 +12,14 @@ from numpy.random import random # uniform random variable [0,1)
 from time import time
 from tqdm import tqdm
 # Agent constants
-SENSITIVITY_CONST = 0.69
+SENSITIVITY_CONST = 0.32
 NORM_CONST = np.exp(- (9 * SENSITIVITY_CONST))
 RELATIONSHIP_SURVIVABILITY_CONST = np.sqrt(0.95)
 
 # Simulation parameters 
 CLUSTER_SIZE_MEAN = 100
 # CLUSTER_SIZE_VARIATION = 4
-TIME_STEPS = 1000
+TIME_STEPS = 500
 NUMBER_OF_AGENTS = 5000
 
 class agent:
@@ -170,11 +170,8 @@ class population:
             self.batch_time_interval(mini_batch)
         # finish off interval by testing relationship status
         self.check_relationship_outcomes()
-        # record any data
-        for a in self.relationship_register:
-            self.population[a[0]].set_relationship_status()
-            self.population[a[1]].set_relationship_status()
-        self.time_series_store.append([len(self.relationship_register),[a.relationship_status for a in self.population]])
+        # record any data below 
+        ...
         return
 
 
@@ -189,12 +186,11 @@ def probabilistic_sampling_func():
 def main(number_of_intervals, pop_size):
     teens = population(probabilistic_sampling_func, pop_size)
     start_time = time()
-    # for t in tqdm(range(number_of_intervals)):
-    for t in (range(number_of_intervals)):
+    for t in tqdm(range(number_of_intervals)):
         teens.full_time_interval()
     print("run complete")
     print(time() - start_time)
     return teens
     
                 
-test = main(TIME_STEPS, NUMBER_OF_AGENTS)
+results_container = main(TIME_STEPS, NUMBER_OF_AGENTS)
