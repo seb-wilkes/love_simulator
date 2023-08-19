@@ -6,20 +6,16 @@ Created on Sat Jul 15 21:28:30 2023
 
 @author: seb-wilkes
 """
-
 import numpy as np
 from numpy.random import random # uniform random variable [0,1)
-from time import time
-from tqdm import tqdm
+
 # Agent constants
 SENSITIVITY_CONST = 0.42
 NORM_CONST = np.exp(- (9 * SENSITIVITY_CONST))
 RELATIONSHIP_SURVIVABILITY_CONST = np.sqrt(0.95)
 
-# Simulation parameters 
+# Run time parameters 
 CLUSTER_SIZE_MEAN = 100
-TIME_STEPS = 300
-NUMBER_OF_AGENTS = 5000
 
 class agent:
     '''
